@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import Visualizer from "./components/visualizer";
 
 const Page = styled.div`
   display: flex;
@@ -11,7 +12,11 @@ const Page = styled.div`
 `;
 
 function App() {
-  return <Page>Hello world!</Page>;
+  return (
+    <Page>
+      <Visualizer />
+    </Page>
+  );
 }
 
 export default App;

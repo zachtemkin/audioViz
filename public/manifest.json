@@ -1,6 +1,6 @@
 {
-  "short_name": "Basic React + Netlify Template",
-  "name": "Basic React + Netlify Template",
+  "short_name": "Audio Viz",
+  "name": "Audio Viz",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
