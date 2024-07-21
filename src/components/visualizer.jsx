@@ -31,6 +31,7 @@ const Visualizer = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioContextInitialized, isPlaying]);
 
   const initializeAudioContext = () => {
@@ -87,9 +88,9 @@ const Visualizer = () => {
     ctx.fillStyle = "rgb(0, 0, 0)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const barWidth = canvas.width / bufferLengthRef.current - 1;
+    // const barWidth = canvas.width / bufferLengthRef.current - 1;
     let barHeight;
-    let x = 0;
+    // let x = 0;
 
     for (let i = 0; i < bufferLengthRef.current; i++) {
       barHeight = dataArrayRef.current[i] * scalingFactor;
@@ -115,7 +116,7 @@ const Visualizer = () => {
         )`;
       }
       //   ctx.fillRect(x, canvas.height - barHeight / 2, barWidth, barHeight / 2);
-      x += barWidth + 1;
+      //   x += barWidth + 1;
     }
 
     // Calculate average amplitude for low, mid, and high frequencies
