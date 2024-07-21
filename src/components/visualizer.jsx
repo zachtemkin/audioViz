@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
+import useParticles from "../useParticles";
 
 const Visualizer = () => {
   const canvasRef = useRef(null);
@@ -10,6 +11,7 @@ const Visualizer = () => {
   const [audioContextInitialized, setAudioContextInitialized] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showMessage, setShowMessage] = useState(true);
+  const { particlesRef, emitParticles } = useParticles();
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -136,18 +138,25 @@ const Visualizer = () => {
       )
     );
 
+    // Check if mid frequency band exceeds 120 and emit particles if true
+    if (lowFreqAvg > 79) {
+      emitParticles(canvas.width / 2, canvas.height / 2);
+    }
+
     // Calculate circle positions
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const radius = (canvas.height - 150) / 2;
-    const distanceFactor = 0.5;
+    // const distanceFactor = 0.25;
 
-    const lowCircleX = centerX + lowFreqAvg * distanceFactor;
-    const lowCircleY = centerY - lowFreqAvg * distanceFactor;
-    const midCircleX = centerX - midFreqAvg * distanceFactor;
-    const midCircleY = centerY - midFreqAvg * distanceFactor;
+    const lowCircleX = centerX + lowFreqAvg * 0.25;
+    const lowCircleY = centerY - lowFreqAvg * 0.25;
+
+    const midCircleX = centerX - midFreqAvg * 0.125;
+    const midCircleY = centerY - midFreqAvg * 0.125;
+
     const highCircleX = centerX;
-    const highCircleY = centerY + highFreqAvg * distanceFactor;
+    const highCircleY = centerY + highFreqAvg * 0.25;
 
     // Map average amplitude to opacity
     const lowOpacity = mapRange(lowFreqAvg, 0, 255, 0.75, 1);
@@ -178,7 +187,27 @@ const Visualizer = () => {
       radius,
       `rgba(0, 0, 255, ${highOpacity})`
     );
+
+    const particleRadius = mapRange(midFreqAvg, 0, 255, 5, 20);
+    const particleY = mapRange(midFreqAvg, 0, 255, -50, 50);
+
+    // Draw particles
+    particlesRef.current.forEach((particle) => {
+      particle.velocity.y = (Math.random() - 0.5) * particleY;
+      ctx.beginPath();
+      ctx.arc(
+        particle.x,
+        particle.y + Math.random() * particleY,
+        particleRadius,
+        0,
+        Math.PI * 2
+      );
+      ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+      ctx.fill();
+    });
+
     ctx.restore();
+    ctx.save();
   };
 
   const mapRange = (value, inMin, inMax, outMin, outMax) => {
