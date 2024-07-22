@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import useParticles from "../useParticles";
+import usePerspectiveGrid from "../usePerspectiveGrid";
 
 const Visualizer = () => {
   const canvasRef = useRef(null);
@@ -12,6 +13,18 @@ const Visualizer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showMessage, setShowMessage] = useState(true);
   const { particlesRef, emitParticles } = useParticles();
+
+  const numVerticalLines = 20;
+  const speed = 2;
+  const delay = 1000;
+  const steepness = 5;
+  const { verticalLinesRef, horizontalLinesRef } = usePerspectiveGrid(
+    numVerticalLines,
+    speed,
+    delay,
+    steepness,
+    isPlaying
+  );
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -90,6 +103,22 @@ const Visualizer = () => {
     ctx.fillStyle = "rgb(0, 0, 0)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Draw perspective grid
+    ctx.strokeStyle = "rgba(0, 255, 0, 1)";
+    ctx.lineWidth = 2;
+    verticalLinesRef.current.forEach((line) => {
+      ctx.beginPath();
+      ctx.moveTo(line.x1, line.y1);
+      ctx.lineTo(line.x2, line.y2);
+      ctx.stroke();
+    });
+    horizontalLinesRef.current.forEach((line) => {
+      ctx.beginPath();
+      ctx.moveTo(line.x1, line.y1);
+      ctx.lineTo(line.x2, line.y2);
+      ctx.stroke();
+    });
+
     // const barWidth = canvas.width / bufferLengthRef.current - 1;
     let barHeight;
     // let x = 0;
@@ -146,7 +175,7 @@ const Visualizer = () => {
     // Calculate circle positions
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = (canvas.height - 150) / 2;
+    const radius = (canvas.height - 350) / 2;
     // const distanceFactor = 0.25;
 
     const lowCircleX = centerX + lowFreqAvg * 0.25;
@@ -159,9 +188,9 @@ const Visualizer = () => {
     const highCircleY = centerY + highFreqAvg * 0.25;
 
     // Map average amplitude to opacity
-    const lowOpacity = mapRange(lowFreqAvg, 0, 255, 0.75, 1);
-    const midOpacity = mapRange(midFreqAvg, 0, 255, 0.75, 1);
-    const highOpacity = mapRange(highFreqAvg, 0, 255, 0.75, 1);
+    const lowOpacity = mapRange(lowFreqAvg, 0, 255, 0.5, 1);
+    const midOpacity = mapRange(midFreqAvg, 0, 255, 0.5, 1);
+    const highOpacity = mapRange(highFreqAvg, 0, 255, 0.5, 1);
 
     // Draw circles
     ctx.save();
