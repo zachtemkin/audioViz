@@ -14,7 +14,7 @@ const Visualizer = () => {
   const [showMessage, setShowMessage] = useState(true);
   const velocitiesRef = useRef([]);
   // const { particlesRef, emitParticles } = useParticles();
-  const orbitAngle = useRef(0);
+  // const orbitAngle = useRef(0);
 
   // const numVerticalLines = 20;
   // const speed = 2;
@@ -106,11 +106,11 @@ const Visualizer = () => {
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    // const maxBarHeight = window.innerHeight - 50;
-    // const scalingFactor = maxBarHeight / 255;
 
     ctx.fillStyle = "rgb(0, 0, 0)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ///////////////// GRID /////////////////
 
     // Draw perspective grid
     // ctx.strokeStyle = "rgb(255, 0, 255)";
@@ -127,6 +127,11 @@ const Visualizer = () => {
     //   ctx.lineTo(line.x2, line.y2);
     //   ctx.stroke();
     // });
+
+    ///////////////// BARS /////////////////
+
+    // const maxBarHeight = window.innerHeight - 50;
+    // const scalingFactor = maxBarHeight / 255;
 
     // const barWidth = canvas.width / bufferLengthRef.current - 1;
     // let barHeight;
@@ -159,6 +164,8 @@ const Visualizer = () => {
     //   x += barWidth + 1;
     // }
 
+    ///////////////// AVERAGE FREQ /////////////////
+
     // Calculate average amplitude for low, mid, and high frequencies
     // const lowFreqAvg = getAverageAmplitude(
     //   dataArrayRef.current.slice(0, bufferLengthRef.current * 0.33)
@@ -181,93 +188,59 @@ const Visualizer = () => {
     //   emitParticles(canvas.width / 2, canvas.height / 2);
     // }
 
-    // Calculate circle positions
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    // const radius = (canvas.height - 350) / 2;
-
-    // const lowCircleX = centerX + lowFreqAvg * 0.25;
-    // const lowCircleY = centerY - lowFreqAvg * 0.25;
-
-    // const midCircleX = centerX - midFreqAvg * 0.125;
-    // const midCircleY = centerY - midFreqAvg * 0.125;
-
-    // const highCircleX = centerX;
-    // const highCircleY = centerY + highFreqAvg * 0.25;
-
-    // Map average amplitude to opacity
-    // const lowOpacity = mapRange(lowFreqAvg, 0, 255, 0.5, 1);
-    // const midOpacity = mapRange(midFreqAvg, 0, 255, 0.5, 1);
-    // const highOpacity = mapRange(highFreqAvg, 0, 255, 0.5, 1);
-
-    // Draw circles
-    // ctx.save();
-    // ctx.globalCompositeOperation = "screen";
-
     ///////////////// Gloop Effect /////////////////
 
-    // Map freq to scale
-    // const lowSize = mapRange(lowFreqAvg, 0, 255, 0.5, 1.5);
-    // const midSize = mapRange(midFreqAvg, 0, 255, 0.5, 1.5);
-    // const highSize = mapRange(highFreqAvg, 0, 255, 0.5, 1.5);
-
-    // Draw Gloop
-    const orbitRadius = 140;
-    // const smallRadius = 275 * lowSize;
-    // const medRadius = 275 * midSize;
-    // const largeRadius = 275 * highSize;
-
-    // Calculate positions for orbiting circles
-    // const xs = centerX + orbitRadius * Math.cos(orbitAngle.current * 1.5);
-    // const ys = centerY + orbitRadius * Math.sin(orbitAngle.current * 1.5);
-    // const xm = centerX + orbitRadius * Math.cos(orbitAngle.current + Math.PI);
-    // const ym = centerY + orbitRadius * Math.sin(orbitAngle.current + Math.PI);
-    // const xl =
-    //   centerX + orbitRadius * Math.cos(orbitAngle.current * 2 + Math.PI / 3);
-    // const yl =
-    //   centerY + orbitRadius * Math.sin(orbitAngle.current * 2 + Math.PI / 3);
-
-    let gloopRad = 275;
-    let gloopx = centerX;
-    let gloopy = centerY;
-
-    const smallGradient = ctx.createLinearGradient(
-      gloopx,
-      gloopy - gloopRad,
-      gloopx,
-      gloopy + gloopRad
-    );
-    smallGradient.addColorStop(0, "#ff0000");
-    smallGradient.addColorStop(1, "#00ff00");
-
-    const medGradient = ctx.createLinearGradient(
-      gloopx,
-      gloopy - gloopRad,
-      gloopx,
-      gloopy + gloopRad
-    );
-    medGradient.addColorStop(0, "#00ff00");
-    medGradient.addColorStop(1, "#0000ff");
-
-    const largeGradient = ctx.createLinearGradient(
-      gloopx,
-      gloopy - gloopRad,
-      gloopx,
-      gloopy + gloopRad
-    );
-    largeGradient.addColorStop(0, "#0000ff");
-    largeGradient.addColorStop(1, "#ff0000");
-
+    // Set the blur
     ctx.save();
     ctx.filter = "blur(24px)";
 
-    let currentGradient = smallGradient;
+    // Calculate circle positions
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Draw Gloop
+    const orbitRadius = 250;
+    const minRad = orbitRadius / 6;
+    const maxRad = minRad * 3;
+    let gloopRad = minRad;
+    let gloopx = centerX;
+    let gloopy = centerY;
+
+    const grad1 = ctx.createLinearGradient(
+      gloopx,
+      gloopy - gloopRad,
+      gloopx,
+      gloopy + gloopRad
+    );
+    grad1.addColorStop(0, "#ff0000");
+    grad1.addColorStop(1, "#00ff00");
+
+    const grad2 = ctx.createLinearGradient(
+      gloopx,
+      gloopy - gloopRad,
+      gloopx,
+      gloopy + gloopRad
+    );
+    grad2.addColorStop(0, "#00ff00");
+    grad2.addColorStop(1, "#0000ff");
+
+    const grad3 = ctx.createLinearGradient(
+      gloopx,
+      gloopy - gloopRad,
+      gloopx,
+      gloopy + gloopRad
+    );
+    grad3.addColorStop(0, "#0000ff");
+    grad3.addColorStop(1, "#ff0000");
+
+    let currentGradient = grad1;
     const currentTime = Date.now();
+
     for (let i = 0; i < bufferLengthRef.current; i++) {
       const angle =
         ((currentTime * velocitiesRef.current[i]) / 50) % (2 * Math.PI);
 
-      gloopRad = mapRange(dataArrayRef.current[i], 0, 255, 140, 240) + 20;
+      gloopRad = mapRange(dataArrayRef.current[i], 0, 255, minRad, maxRad);
 
       gloopx =
         centerX +
@@ -277,24 +250,16 @@ const Visualizer = () => {
       gloopy =
         centerY +
         orbitRadius *
-          Math.sin(
-            orbitAngle.current + (i * 2 * Math.PI) / bufferLengthRef.current
-          );
-      if (i % 3 === 0) currentGradient = smallGradient;
-      if (i % 3 === 1) currentGradient = medGradient;
-      if (i % 3 === 2) currentGradient = largeGradient;
+          Math.sin(angle + (i * 2 * Math.PI) / bufferLengthRef.current);
+      if (i % 3 === 0) currentGradient = grad1;
+      if (i % 3 === 1) currentGradient = grad2;
+      if (i % 3 === 2) currentGradient = grad3;
 
       drawCircle(ctx, gloopx, gloopy, gloopRad, currentGradient);
     }
 
-    // Randomly adjust velocities to create variability in speed
-    // velocitiesRef.current = velocitiesRef.current.map((v) => {
-    //   return Math.max(0.01, v + (Math.random() - 0.5) * 0.01); // Change velocity randomly
-    // });
-
-    // drawCircle(ctx, xm, ym, gloopRad, medGradient);
-    // drawCircle(ctx, xl, yl, gloopRad, largeGradient);
-    drawCircle(ctx, centerX, centerY, orbitRadius + 180, "rgb(0, 0, 0)");
+    // Center Circle
+    drawCircle(ctx, centerX, centerY, orbitRadius, "rgb(0, 0, 0)");
 
     ctx.restore();
     ctx.save();
@@ -312,32 +277,6 @@ const Visualizer = () => {
 
     ctx.restore();
     ctx.save();
-
-    ctx.filter = "blur(24px)";
-    ctx.restore();
-    ctx.save();
-
-    // drawCircle(
-    //   ctx,
-    //   lowCircleX,
-    //   lowCircleY,
-    //   radius,
-    //   `rgba(255, 0, 0, ${lowOpacity})`
-    // );
-    // drawCircle(
-    //   ctx,
-    //   midCircleX,
-    //   midCircleY,
-    //   radius,
-    //   `rgba(0, 255, 0, ${midOpacity})`
-    // );
-    // drawCircle(
-    //   ctx,
-    //   highCircleX,
-    //   highCircleY,
-    //   radius,
-    //   `rgba(0, 0, 255, ${highOpacity})`
-    // );
 
     // const particleRadius = mapRange(midFreqAvg, 0, 255, 5, 20);
     // const particleY = mapRange(midFreqAvg, 0, 255, -50, 50);
