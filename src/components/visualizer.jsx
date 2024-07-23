@@ -199,9 +199,10 @@ const Visualizer = () => {
     const centerY = canvas.height / 2;
 
     // Draw Gloop
-    const orbitRadius = 250;
-    const minRad = orbitRadius / 6;
-    const maxRad = minRad * 3;
+    const centerRadius = 256;
+    const orbitRadius = centerRadius - 32;
+    const minRad = orbitRadius / 4;
+    const maxRad = minRad * 2;
     let gloopRad = minRad;
     let gloopx = centerX;
     let gloopy = centerY;
@@ -230,8 +231,19 @@ const Visualizer = () => {
       gloopx,
       gloopy + gloopRad
     );
-    grad3.addColorStop(0, "#0000ff");
+    grad3.addColorStop(0, "#00ffff");
     grad3.addColorStop(1, "#ff0000");
+
+    const grad4 = ctx.createLinearGradient(
+      gloopx,
+      gloopy - gloopRad,
+      gloopx,
+      gloopy + gloopRad
+    );
+    grad4.addColorStop(0, "#ffff00");
+    grad4.addColorStop(1, "#0000ff");
+
+    const grads = [grad1, grad2, grad3, grad4];
 
     let currentGradient = grad1;
     const currentTime = Date.now();
@@ -251,15 +263,14 @@ const Visualizer = () => {
         centerY +
         orbitRadius *
           Math.sin(angle + (i * 2 * Math.PI) / bufferLengthRef.current);
-      if (i % 3 === 0) currentGradient = grad1;
-      if (i % 3 === 1) currentGradient = grad2;
-      if (i % 3 === 2) currentGradient = grad3;
+
+      currentGradient = grads[i % grads.length];
 
       drawCircle(ctx, gloopx, gloopy, gloopRad, currentGradient);
     }
 
     // Center Circle
-    drawCircle(ctx, centerX, centerY, orbitRadius, "rgb(0, 0, 0)");
+    drawCircle(ctx, centerX, centerY, centerRadius, "rgb(0, 0, 0)");
 
     ctx.restore();
     ctx.save();
