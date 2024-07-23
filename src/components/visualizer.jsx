@@ -44,10 +44,45 @@ const Visualizer = () => {
       }
     };
 
+    const handleClick = () => {
+      if (!audioContextInitialized) {
+        initializeAudioContext();
+      } else {
+        togglePlayPause();
+      }
+    };
+
+    const handleTap = (event) => {
+      const touch = event.touches[0] || event.changedTouches[0];
+      const startX = touch.clientX;
+      const startY = touch.clientY;
+
+      window.addEventListener(
+        "touchend",
+        (event) => {
+          const touchEnd = event.changedTouches[0];
+          const endX = touchEnd.clientX;
+          const endY = touchEnd.clientY;
+
+          const threshold = 10; // adjust as needed
+          if (
+            Math.abs(endX - startX) < threshold &&
+            Math.abs(endY - startY) < threshold
+          ) {
+          }
+        },
+        { once: true }
+      ); // Using { once: true } to automatically remove the touchend listener
+    };
+
     window.addEventListener("keydown", handleKeyPress);
+    window.addEventListener("click", handleClick);
+    window.addEventListener("touchstart", handleTap, false);
 
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
+      window.removeEventListener("click", handleClick);
+      window.removeEventListener("touchstart", handleTap, false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioContextInitialized, isPlaying]);
@@ -198,7 +233,7 @@ const Visualizer = () => {
     const centerY = canvas.height / 2;
 
     // Set Gloop parameters
-    const centerRadius = 256;
+    const centerRadius = canvas.width > 500 ? 256 : canvas.width - 256;
     const orbitRadius = centerRadius - 48;
     const minRad = orbitRadius / 6 + 6;
     const maxRad = minRad * 2.5;
@@ -377,7 +412,7 @@ const Visualizer = () => {
           }}>
           {isPlaying
             ? "Press space to pause\nPress backspace to restart"
-            : "Press space to start"}
+            : "Touch to start"}
         </div>
       )}
     </div>
