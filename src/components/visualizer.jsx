@@ -12,6 +12,7 @@ const Visualizer = () => {
   const [audioContextInitialized, setAudioContextInitialized] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showMessage, setShowMessage] = useState(true);
+  const velocitiesRef = useRef([]);
   // const { particlesRef, emitParticles } = useParticles();
   const orbitAngle = useRef(0);
 
@@ -90,6 +91,13 @@ const Visualizer = () => {
     setShowMessage(false);
     setIsPlaying(true);
   };
+
+  // Initialize random velocities for each circle
+  if (velocitiesRef.current.length === 0) {
+    for (let i = 0; i < bufferLengthRef.current; i++) {
+      velocitiesRef.current.push(Math.random() * (0.08 - 0.02) + 0.02);
+    }
+  }
 
   const draw = () => {
     requestAnimationFrame(draw);
@@ -229,8 +237,8 @@ const Visualizer = () => {
       gloopx,
       gloopy + gloopRad
     );
-    smallGradient.addColorStop(0, "#36a036");
-    smallGradient.addColorStop(1, "#bc2d2d");
+    smallGradient.addColorStop(0, "#ff0000");
+    smallGradient.addColorStop(1, "#00ff00");
 
     const medGradient = ctx.createLinearGradient(
       gloopx,
@@ -238,8 +246,8 @@ const Visualizer = () => {
       gloopx,
       gloopy + gloopRad
     );
-    medGradient.addColorStop(0, "#a08b36");
-    medGradient.addColorStop(1, "#2dbca4");
+    medGradient.addColorStop(0, "#00ff00");
+    medGradient.addColorStop(1, "#0000ff");
 
     const largeGradient = ctx.createLinearGradient(
       gloopx,
@@ -247,30 +255,30 @@ const Visualizer = () => {
       gloopx,
       gloopy + gloopRad
     );
-    largeGradient.addColorStop(0, "#22c473");
-    largeGradient.addColorStop(1, "#b521c6");
+    largeGradient.addColorStop(0, "#0000ff");
+    largeGradient.addColorStop(1, "#ff0000");
 
     ctx.save();
     ctx.filter = "blur(24px)";
 
     let currentGradient = smallGradient;
+    const currentTime = Date.now();
     for (let i = 0; i < bufferLengthRef.current; i++) {
-      gloopRad = mapRange(dataArrayRef.current[i], 0, 255, 140, 200) + 60;
+      const angle =
+        ((currentTime * velocitiesRef.current[i]) / 50) % (2 * Math.PI);
+
+      gloopRad = mapRange(dataArrayRef.current[i], 0, 255, 140, 240) + 20;
+
       gloopx =
         centerX +
         orbitRadius *
-          Math.cos(
-            orbitAngle.current +
-              ((2 * Math.PI) / bufferLengthRef.current) * i +
-              1
-          );
+          Math.cos(angle + (i * 2 * Math.PI) / bufferLengthRef.current);
+
       gloopy =
         centerY +
         orbitRadius *
           Math.sin(
-            orbitAngle.current +
-              ((2 * Math.PI) / bufferLengthRef.current) * i +
-              1
+            orbitAngle.current + (i * 2 * Math.PI) / bufferLengthRef.current
           );
       if (i % 3 === 0) currentGradient = smallGradient;
       if (i % 3 === 1) currentGradient = medGradient;
@@ -278,17 +286,21 @@ const Visualizer = () => {
 
       drawCircle(ctx, gloopx, gloopy, gloopRad, currentGradient);
     }
-    orbitAngle.current += 0.02;
+
+    // Randomly adjust velocities to create variability in speed
+    // velocitiesRef.current = velocitiesRef.current.map((v) => {
+    //   return Math.max(0.01, v + (Math.random() - 0.5) * 0.01); // Change velocity randomly
+    // });
 
     // drawCircle(ctx, xm, ym, gloopRad, medGradient);
     // drawCircle(ctx, xl, yl, gloopRad, largeGradient);
-    drawCircle(ctx, centerX, centerY, orbitRadius + 140, "rgb(0, 0, 0)");
+    drawCircle(ctx, centerX, centerY, orbitRadius + 180, "rgb(0, 0, 0)");
 
     ctx.restore();
     ctx.save();
 
     ctx.globalCompositeOperation = "color-dodge";
-    ctx.fillStyle = "#ccc";
+    ctx.fillStyle = "#cccbcb";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.restore();
@@ -298,6 +310,10 @@ const Visualizer = () => {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    ctx.restore();
+    ctx.save();
+
+    ctx.filter = "blur(24px)";
     ctx.restore();
     ctx.save();
 
