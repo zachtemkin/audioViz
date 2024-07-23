@@ -12,9 +12,10 @@ const Visualizer = () => {
   const [audioContextInitialized, setAudioContextInitialized] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showMessage, setShowMessage] = useState(true);
+
   const velocitiesRef = useRef([]);
+
   // const { particlesRef, emitParticles } = useParticles();
-  // const orbitAngle = useRef(0);
 
   // const numVerticalLines = 20;
   // const speed = 2;
@@ -95,25 +96,23 @@ const Visualizer = () => {
   // Initialize random velocities for each circle
   if (velocitiesRef.current.length === 0) {
     for (let i = 0; i < bufferLengthRef.current; i++) {
-      velocitiesRef.current.push(Math.random() * (0.08 - 0.02) + 0.02);
+      velocitiesRef.current.push(Math.random() * (0.08 - 0.01) + 0.01);
     }
   }
 
   const draw = () => {
     requestAnimationFrame(draw);
 
-    analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-
     ctx.fillStyle = "rgb(0, 0, 0)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+
     ///////////////// GRID /////////////////
 
-    // Draw perspective grid
-    // ctx.strokeStyle = "rgb(255, 0, 255)";
+    // ctx.strokeStyle = "rgb(171, 171, 171)";
     // ctx.lineWidth = 2;
     // verticalLinesRef.current.forEach((line) => {
     //   ctx.beginPath();
@@ -194,19 +193,20 @@ const Visualizer = () => {
     ctx.save();
     ctx.filter = "blur(24px)";
 
-    // Calculate circle positions
+    // Calculate center
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    // Draw Gloop
+    // Set Gloop parameters
     const centerRadius = 256;
-    const orbitRadius = centerRadius - 32;
+    const orbitRadius = centerRadius - 48;
     const minRad = orbitRadius / 4;
-    const maxRad = minRad * 2;
+    const maxRad = minRad * 2.5;
     let gloopRad = minRad;
     let gloopx = centerX;
     let gloopy = centerY;
 
+    // Make some gradients
     const grad1 = ctx.createLinearGradient(
       gloopx,
       gloopy - gloopRad,
@@ -244,15 +244,17 @@ const Visualizer = () => {
     grad4.addColorStop(1, "#0000ff");
 
     const grads = [grad1, grad2, grad3, grad4];
-
     let currentGradient = grad1;
+
     const currentTime = Date.now();
 
+    // Draw a Gloop for each FFT band and modulate it's radius with the band
+    // Rotate the Gloop around the main circle at it's own velocity
     for (let i = 0; i < bufferLengthRef.current; i++) {
       const angle =
         ((currentTime * velocitiesRef.current[i]) / 50) % (2 * Math.PI);
 
-      gloopRad = mapRange(dataArrayRef.current[i], 0, 255, minRad, maxRad);
+      gloopRad = mapExp(dataArrayRef.current[i], 0, 255, minRad, maxRad);
 
       gloopx =
         centerX +
@@ -274,14 +276,12 @@ const Visualizer = () => {
 
     ctx.restore();
     ctx.save();
-
     ctx.globalCompositeOperation = "color-dodge";
     ctx.fillStyle = "#cccbcb";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.restore();
     ctx.save();
-
     ctx.globalCompositeOperation = "color-burn";
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -311,9 +311,25 @@ const Visualizer = () => {
     // ctx.save();
   };
 
-  const mapRange = (value, inMin, inMax, outMin, outMax) => {
-    return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
-  };
+  // const mapRange = (value, inMin, inMax, outMin, outMax) => {
+  //   return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+  // };
+
+  function mapExp(value, inMin, inMax, outMin, outMax) {
+    // Ensure the input range is valid
+    if (inMin >= inMax || outMin >= outMax) {
+      throw new Error("Invalid range");
+    }
+
+    // Normalize the input value to the range [0, 1]
+    const normalized = (value - inMin) / (inMax - inMin);
+
+    // Apply an exponential transformation
+    const expValue = Math.pow(normalized, 10); // Adjust the exponent as needed
+
+    // Map the transformed value to the output range
+    return outMin + expValue * (outMax - outMin);
+  }
 
   // const getAverageAmplitude = (array) => {
   //   const sum = array.reduce((a, b) => a + b, 0);
