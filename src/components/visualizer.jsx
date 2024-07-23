@@ -191,7 +191,7 @@ const Visualizer = () => {
 
     // Set the blur
     ctx.save();
-    ctx.filter = "blur(24px)";
+    ctx.filter = "blur(12px)";
 
     // Calculate center
     const centerX = canvas.width / 2;
@@ -200,7 +200,7 @@ const Visualizer = () => {
     // Set Gloop parameters
     const centerRadius = 256;
     const orbitRadius = centerRadius - 48;
-    const minRad = orbitRadius / 4;
+    const minRad = orbitRadius / 6 + 6;
     const maxRad = minRad * 2.5;
     let gloopRad = minRad;
     let gloopx = centerX;
@@ -271,6 +271,10 @@ const Visualizer = () => {
       drawCircle(ctx, gloopx, gloopy, gloopRad, currentGradient);
     }
 
+    ctx.restore();
+    ctx.save();
+    ctx.filter = "blur(24px)";
+
     // Center Circle
     drawCircle(ctx, centerX, centerY, centerRadius, "rgb(0, 0, 0)");
 
@@ -325,7 +329,7 @@ const Visualizer = () => {
     const normalized = (value - inMin) / (inMax - inMin);
 
     // Apply an exponential transformation
-    const expValue = Math.pow(normalized, 10); // Adjust the exponent as needed
+    const expValue = Math.pow(normalized, 2.5); // Adjust the exponent as needed
 
     // Map the transformed value to the output range
     return outMin + expValue * (outMax - outMin);
