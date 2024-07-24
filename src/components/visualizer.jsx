@@ -15,7 +15,7 @@ const Visualizer = () => {
 
   const velocitiesRef = useRef([]);
 
-  const { particlesRef, emitParticles } = useParticles();
+  // const { particlesRef, emitParticles } = useParticles();
 
   // const numVerticalLines = 20;
   // const speed = 2;
@@ -218,9 +218,9 @@ const Visualizer = () => {
     // );
 
     // Check if mid frequency band exceeds 120 and emit particles if true
-    if (midFreqAvg > 60) {
-      emitParticles(canvas.width / 2, canvas.height / 2);
-    }
+    // if (midFreqAvg > 60) {
+    //   emitParticles(canvas.width / 2, canvas.height / 2);
+    // }
 
     ///////////////// Gloop Effect /////////////////
 
@@ -313,6 +313,35 @@ const Visualizer = () => {
     // Center Circle
     drawCircle(ctx, centerX, centerY, centerRadius, "rgb(0, 0, 0)");
 
+    //////////////// Particles ////////////////
+
+    // ctx.filter = "blur(2px)";
+
+    // const particleRadius = mapRange(midFreqAvg, 0, 255, 5, 7);
+    // const particleY = mapRange(midFreqAvg, 0, 255, -10, 10);
+
+    // // Draw particles
+    // particlesRef.current.forEach((particle) => {
+    //   particle.velocity.y = (Math.random() - 0.5) * particleY;
+    //   ctx.beginPath();
+    //   ctx.arc(
+    //     particle.x,
+    //     particle.y + Math.random() * particleY,
+    //     particleRadius,
+    //     0,
+    //     Math.PI * 2
+    //   );
+    //   ctx.fillStyle = `rgba(
+    //     ${Math.random() * 255},
+    //     ${Math.random() * 255},
+    //     ${Math.random() * 255},
+    //     ${particle.opacity})`;
+    //   ctx.fill();
+    // });
+    // ctx.restore();
+    // ctx.save();
+
+    // Filters
     ctx.restore();
     ctx.save();
     ctx.globalCompositeOperation = "color-dodge";
@@ -327,36 +356,11 @@ const Visualizer = () => {
 
     ctx.restore();
     ctx.save();
-
-    //////////////// Particles ////////////////
-
-    ctx.filter = "blur(24px)";
-
-    const particleRadius = mapRange(midFreqAvg, 0, 255, 5, 60);
-    const particleY = mapRange(midFreqAvg, 0, 255, -10, 10);
-
-    // Draw particles
-    particlesRef.current.forEach((particle) => {
-      particle.velocity.y = (Math.random() - 0.5) * particleY;
-      ctx.beginPath();
-      ctx.arc(
-        particle.x,
-        particle.y + Math.random() * particleY,
-        particleRadius,
-        0,
-        Math.PI * 2
-      );
-      ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
-      ctx.fill();
-    });
-
-    ctx.restore();
-    ctx.save();
   };
 
-  const mapRange = (value, inMin, inMax, outMin, outMax) => {
-    return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
-  };
+  // const mapRange = (value, inMin, inMax, outMin, outMax) => {
+  //   return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+  // };
 
   function mapExp(value, inMin, inMax, outMin, outMax) {
     // Ensure the input range is valid
@@ -368,7 +372,7 @@ const Visualizer = () => {
     const normalized = (value - inMin) / (inMax - inMin);
 
     // Apply an exponential transformation
-    const expValue = Math.pow(normalized, 2); // Adjust the exponent as needed
+    const expValue = Math.pow(normalized, 2.5); // Adjust the exponent as needed
 
     // Map the transformed value to the output range
     return outMin + expValue * (outMax - outMin);
@@ -396,7 +400,7 @@ const Visualizer = () => {
         overflow: "hidden",
       }}>
       <audio ref={audioRef} style={{ display: "none" }}>
-        <source src='/audio/op-z_6.mp3' type='audio/mp3' />
+        <source src='/audio/op-z_9.mp3' type='audio/mp3' />
         Your browser does not support the audio element.
       </audio>
       <canvas
