@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-// import useParticles from "../useParticles";
+import useParticles from "../useParticles";
 // import usePerspectiveGrid from "../usePerspectiveGrid";
 
 const Visualizer = () => {
@@ -15,7 +15,7 @@ const Visualizer = () => {
 
   const velocitiesRef = useRef([]);
 
-  // const { particlesRef, emitParticles } = useParticles();
+  const { particlesRef, emitParticles } = useParticles();
 
   // const numVerticalLines = 20;
   // const speed = 2;
@@ -204,12 +204,12 @@ const Visualizer = () => {
     // const lowFreqAvg = getAverageAmplitude(
     //   dataArrayRef.current.slice(0, bufferLengthRef.current * 0.33)
     // );
-    // const midFreqAvg = getAverageAmplitude(
-    //   dataArrayRef.current.slice(
-    //     bufferLengthRef.current * 0.33,
-    //     bufferLengthRef.current * 0.66
-    //   )
-    // );
+    const midFreqAvg = getAverageAmplitude(
+      dataArrayRef.current.slice(
+        bufferLengthRef.current * 0.33,
+        bufferLengthRef.current * 0.66
+      )
+    );
     // const highFreqAvg = getAverageAmplitude(
     //   dataArrayRef.current.slice(
     //     bufferLengthRef.current * 0.66,
@@ -218,9 +218,9 @@ const Visualizer = () => {
     // );
 
     // Check if mid frequency band exceeds 120 and emit particles if true
-    // if (lowFreqAvg > 79) {
-    //   emitParticles(canvas.width / 2, canvas.height / 2);
-    // }
+    if (midFreqAvg > 60) {
+      emitParticles(canvas.width / 2, canvas.height / 2);
+    }
 
     ///////////////// Gloop Effect /////////////////
 
@@ -328,31 +328,35 @@ const Visualizer = () => {
     ctx.restore();
     ctx.save();
 
-    // const particleRadius = mapRange(midFreqAvg, 0, 255, 5, 20);
-    // const particleY = mapRange(midFreqAvg, 0, 255, -50, 50);
+    //////////////// Particles ////////////////
 
-    // // Draw particles
-    // particlesRef.current.forEach((particle) => {
-    //   particle.velocity.y = (Math.random() - 0.5) * particleY;
-    //   ctx.beginPath();
-    //   ctx.arc(
-    //     particle.x,
-    //     particle.y + Math.random() * particleY,
-    //     particleRadius,
-    //     0,
-    //     Math.PI * 2
-    //   );
-    //   ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
-    //   ctx.fill();
-    // });
+    ctx.filter = "blur(24px)";
 
-    // ctx.restore();
-    // ctx.save();
+    const particleRadius = mapRange(midFreqAvg, 0, 255, 5, 60);
+    const particleY = mapRange(midFreqAvg, 0, 255, -10, 10);
+
+    // Draw particles
+    particlesRef.current.forEach((particle) => {
+      particle.velocity.y = (Math.random() - 0.5) * particleY;
+      ctx.beginPath();
+      ctx.arc(
+        particle.x,
+        particle.y + Math.random() * particleY,
+        particleRadius,
+        0,
+        Math.PI * 2
+      );
+      ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+      ctx.fill();
+    });
+
+    ctx.restore();
+    ctx.save();
   };
 
-  // const mapRange = (value, inMin, inMax, outMin, outMax) => {
-  //   return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
-  // };
+  const mapRange = (value, inMin, inMax, outMin, outMax) => {
+    return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+  };
 
   function mapExp(value, inMin, inMax, outMin, outMax) {
     // Ensure the input range is valid
@@ -364,16 +368,16 @@ const Visualizer = () => {
     const normalized = (value - inMin) / (inMax - inMin);
 
     // Apply an exponential transformation
-    const expValue = Math.pow(normalized, 2.5); // Adjust the exponent as needed
+    const expValue = Math.pow(normalized, 2); // Adjust the exponent as needed
 
     // Map the transformed value to the output range
     return outMin + expValue * (outMax - outMin);
   }
 
-  // const getAverageAmplitude = (array) => {
-  //   const sum = array.reduce((a, b) => a + b, 0);
-  //   return sum / array.length;
-  // };
+  const getAverageAmplitude = (array) => {
+    const sum = array.reduce((a, b) => a + b, 0);
+    return sum / array.length;
+  };
 
   const drawCircle = (context, x, y, radius, color) => {
     context.beginPath();
@@ -392,7 +396,7 @@ const Visualizer = () => {
         overflow: "hidden",
       }}>
       <audio ref={audioRef} style={{ display: "none" }}>
-        <source src='/audio/op-z_9.mp3' type='audio/mp3' />
+        <source src='/audio/op-z_6.mp3' type='audio/mp3' />
         Your browser does not support the audio element.
       </audio>
       <canvas

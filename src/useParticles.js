@@ -4,7 +4,7 @@ const useParticles = () => {
   const particlesRef = useRef([]);
 
   const emitParticles = useCallback((x, y) => {
-    const particleCount = Math.floor(Math.random() * 16) + 5; // Emit between 5 and 20 particles
+    const particleCount = Math.floor(Math.random() * 6) + 5; // Emit between 5 and 20 particles
     const newParticles = [];
     for (let i = 0; i < particleCount; i++) {
       newParticles.push({
