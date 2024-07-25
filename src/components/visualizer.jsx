@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import useParticles from "../useParticles";
+// import useParticles from "../useParticles";
 // import usePerspectiveGrid from "../usePerspectiveGrid";
 
 const Visualizer = () => {
@@ -13,6 +13,11 @@ const Visualizer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showMessage, setShowMessage] = useState(true);
 
+  const lastTime = useRef();
+  // const medianAmplitude = useRef(255);
+  const maxAmplitude = useRef(255);
+  const newMaxAmplitude = useRef(255);
+  const amplitudeDelta = useRef(0);
   const velocitiesRef = useRef([]);
 
   // const { particlesRef, emitParticles } = useParticles();
@@ -28,6 +33,10 @@ const Visualizer = () => {
   //   steepness,
   //   isPlaying
   // );
+
+  useEffect(() => {
+    lastTime.current = Date.now();
+  }, []);
 
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -172,7 +181,14 @@ const Visualizer = () => {
     // let x = 0;
 
     // for (let i = 0; i < bufferLengthRef.current; i++) {
-    //   barHeight = dataArrayRef.current[i] * scalingFactor;
+    //   // barHeight = dataArrayRef.current[i] * scalingFactor;
+    //   barHeight = mapExp(
+    //     dataArrayRef.current[i],
+    //     0,
+    //     maxAmplitude.current,
+    //     0,
+    //     maxBarHeight
+    //   );
 
     //   // Set bar color based on frequency range
     //   if (i < bufferLengthRef.current * 0.33) {
@@ -204,12 +220,12 @@ const Visualizer = () => {
     // const lowFreqAvg = getAverageAmplitude(
     //   dataArrayRef.current.slice(0, bufferLengthRef.current * 0.33)
     // );
-    const midFreqAvg = getAverageAmplitude(
-      dataArrayRef.current.slice(
-        bufferLengthRef.current * 0.33,
-        bufferLengthRef.current * 0.66
-      )
-    );
+    // const midFreqAvg = getAverageAmplitude(
+    //   dataArrayRef.current.slice(
+    //     bufferLengthRef.current * 0.33,
+    //     bufferLengthRef.current * 0.66
+    //   )
+    // );
     // const highFreqAvg = getAverageAmplitude(
     //   dataArrayRef.current.slice(
     //     bufferLengthRef.current * 0.66,
@@ -283,13 +299,50 @@ const Visualizer = () => {
 
     const currentTime = Date.now();
 
+    // Every second determine the new max amplitude
+
+    if (currentTime - lastTime.current > 1000) {
+      newMaxAmplitude.current = findMaxValue(dataArrayRef.current);
+      amplitudeDelta.current = maxAmplitude.current - newMaxAmplitude.current;
+
+      if (amplitudeDelta.current > 0 && newMaxAmplitude.current > 0) {
+        maxAmplitude.current = newMaxAmplitude.current;
+        console.log("new max:", maxAmplitude.current);
+      } else if (amplitudeDelta.current < -15) {
+        maxAmplitude.current = newMaxAmplitude.current;
+        console.log("new max:", maxAmplitude.current);
+      }
+
+      lastTime.current = currentTime;
+    }
+
     // Draw a Gloop for each FFT band and modulate it's radius with the band
     // Rotate the Gloop around the main circle at it's own velocity
     for (let i = 0; i < bufferLengthRef.current; i++) {
       const angle =
         ((currentTime * velocitiesRef.current[i]) / 50) % (2 * Math.PI);
 
-      gloopRad = mapExp(dataArrayRef.current[i], 0, 255, minRad, maxRad);
+      // if (currentTime - lastTime.current > 1000) {
+      //   amplitudeDelta.current = maxAmplitude.current - dataArrayRef.current[i];
+
+      //   if (amplitudeDelta.current > 0 && dataArrayRef.current[i] > 0) {
+      //     maxAmplitude.current = dataArrayRef.current[i];
+      //     console.log("new max:", maxAmplitude.current);
+      //   } else if (amplitudeDelta.current < -15) {
+      //     maxAmplitude.current = dataArrayRef.current[i];
+      //     console.log("new max:", maxAmplitude.current);
+      //   }
+
+      //   lastTime.current = currentTime;
+      // }
+
+      gloopRad = mapExp(
+        dataArrayRef.current[i],
+        0,
+        maxAmplitude.current,
+        minRad,
+        maxRad
+      );
 
       gloopx =
         centerX +
@@ -358,37 +411,78 @@ const Visualizer = () => {
     ctx.save();
   };
 
-  // const mapRange = (value, inMin, inMax, outMin, outMax) => {
-  //   return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
-  // };
-
-  function mapExp(value, inMin, inMax, outMin, outMax) {
-    // Ensure the input range is valid
-    if (inMin >= inMax || outMin >= outMax) {
-      throw new Error("Invalid range");
-    }
-
-    // Normalize the input value to the range [0, 1]
-    const normalized = (value - inMin) / (inMax - inMin);
-
-    // Apply an exponential transformation
-    const expValue = Math.pow(normalized, 2.5); // Adjust the exponent as needed
-
-    // Map the transformed value to the output range
-    return outMin + expValue * (outMax - outMin);
-  }
-
-  const getAverageAmplitude = (array) => {
-    const sum = array.reduce((a, b) => a + b, 0);
-    return sum / array.length;
-  };
-
+  // Function to draw a circle
   const drawCircle = (context, x, y, radius, color) => {
     context.beginPath();
     context.arc(x, y, radius, 0, Math.PI * 2);
     context.fillStyle = color;
     context.fill();
   };
+
+  // Function to map range lineraly
+  // const mapRange = (value, inMin, inMax, outMin, outMax) => {
+  //   return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+  // };
+
+  // Function to map range exponentially
+  function mapExp(value, inMin, inMax, outMin, outMax) {
+    // Ensure the input range is valid
+    if (inMin >= inMax || outMin >= outMax) {
+      throw new Error(`Invalid range`);
+    }
+    // Clamp the input value to the input range
+    value = Math.max(inMin, Math.min(value, inMax));
+    // Normalize the input value to the range [0, 1]
+    const normalized = (value - inMin) / (inMax - inMin);
+    // Apply an exponential transformation
+    const expValue = Math.pow(normalized, 3); // Adjust the exponent as needed
+    // Map the transformed value to the output range
+    return outMin + expValue * (outMax - outMin);
+  }
+
+  // Function to get the average of an array
+  // const getAverageAmplitude = (array) => {
+  //   const sum = array.reduce((a, b) => a + b, 0);
+  //   return sum / array.length;
+  // };
+
+  // Function to find the max value of an array
+  const findMaxValue = (arr) => {
+    if (arr.length === 0) {
+      return null;
+    }
+
+    let maxValue = arr[0];
+    for (let i = 1; i < arr.length; i++) {
+      if (arr[i] > maxValue) {
+        maxValue = arr[i];
+      }
+    }
+
+    return maxValue;
+  };
+
+  // Function to find the median of an array
+  // function findMedian(arr) {
+  //   // Check if the array is empty
+  //   if (arr.length === 0) {
+  //     return null; // or throw an error if preferred
+  //   }
+
+  //   // Sort the array in ascending order
+  //   arr.sort((a, b) => a - b);
+
+  //   // Find the middle index
+  //   const midIndex = Math.floor(arr.length / 2);
+
+  //   // If the array has an odd length, return the middle element
+  //   if (arr.length % 2 !== 0) {
+  //     return arr[midIndex];
+  //   } else {
+  //     // If the array has an even length, return the average of the two middle elements
+  //     return (arr[midIndex - 1] + arr[midIndex]) / 2;
+  //   }
+  // }
 
   return (
     <div
