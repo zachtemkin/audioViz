@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 // import useParticles from "../useParticles";
-// import usePerspectiveGrid from "../usePerspectiveGrid";
+import usePerspectiveGrid from "../usePerspectiveGrid";
 
 const Visualizer = () => {
   const canvasRef = useRef(null);
@@ -12,6 +12,7 @@ const Visualizer = () => {
   const [audioContextInitialized, setAudioContextInitialized] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showMessage, setShowMessage] = useState(true);
+  const gridIsOn = useRef(false);
 
   const lastTime = useRef();
   // const medianAmplitude = useRef(255);
@@ -22,17 +23,19 @@ const Visualizer = () => {
 
   // const { particlesRef, emitParticles } = useParticles();
 
-  // const numVerticalLines = 20;
-  // const speed = 2;
-  // const delay = 1000;
-  // const steepness = 5;
-  // const { verticalLinesRef, horizontalLinesRef } = usePerspectiveGrid(
-  //   numVerticalLines,
-  //   speed,
-  //   delay,
-  //   steepness,
-  //   isPlaying
-  // );
+  const numVerticalLines = 20;
+  const speed = 0.025;
+  const acceleration = 0.05;
+  const delay = 500;
+  const steepness = 5;
+  const { verticalLinesRef, horizontalLinesRef } = usePerspectiveGrid(
+    numVerticalLines,
+    speed,
+    acceleration,
+    delay,
+    steepness,
+    isPlaying
+  );
 
   useEffect(() => {
     lastTime.current = Date.now();
@@ -50,6 +53,10 @@ const Visualizer = () => {
         if (audioContextInitialized) {
           restartAudio();
         }
+      } else if (event.code === "KeyG") {
+        !gridIsOn.current
+          ? (gridIsOn.current = true)
+          : (gridIsOn.current = false);
       }
     };
 
@@ -94,7 +101,7 @@ const Visualizer = () => {
       window.removeEventListener("touchstart", handleTap, false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioContextInitialized, isPlaying]);
+  }, [audioContextInitialized, isPlaying, gridIsOn]);
 
   const initializeAudioContext = () => {
     audioContextRef.current = new (window.AudioContext ||
@@ -154,23 +161,6 @@ const Visualizer = () => {
 
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
 
-    ///////////////// GRID /////////////////
-
-    // ctx.strokeStyle = "rgb(171, 171, 171)";
-    // ctx.lineWidth = 2;
-    // verticalLinesRef.current.forEach((line) => {
-    //   ctx.beginPath();
-    //   ctx.moveTo(line.x1, line.y1);
-    //   ctx.lineTo(line.x2, line.y2);
-    //   ctx.stroke();
-    // });
-    // horizontalLinesRef.current.forEach((line) => {
-    //   ctx.beginPath();
-    //   ctx.moveTo(line.x1, line.y1);
-    //   ctx.lineTo(line.x2, line.y2);
-    //   ctx.stroke();
-    // });
-
     ///////////////// BARS /////////////////
 
     // const maxBarHeight = window.innerHeight - 50;
@@ -214,7 +204,7 @@ const Visualizer = () => {
     //   x += barWidth + 1;
     // }
 
-    ///////////////// AVERAGE FREQ /////////////////
+    ///////////////// CALCULATE AVERAGE FREQ /////////////////
 
     // Calculate average amplitude for low, mid, and high frequencies
     // const lowFreqAvg = getAverageAmplitude(
@@ -250,7 +240,7 @@ const Visualizer = () => {
 
     // Set Gloop parameters
     const centerRadius = canvas.width > 500 ? 256 : canvas.width - 256;
-    const orbitRadius = centerRadius - 48;
+    const orbitRadius = centerRadius - 0.19 * centerRadius;
     const minRad = orbitRadius / 6 + 6;
     const maxRad = minRad * 2.5;
     let gloopRad = minRad;
@@ -307,10 +297,10 @@ const Visualizer = () => {
 
       if (amplitudeDelta.current > 0 && newMaxAmplitude.current > 0) {
         maxAmplitude.current = newMaxAmplitude.current;
-        console.log("new max:", maxAmplitude.current);
+        // console.log("new max:", maxAmplitude.current);
       } else if (amplitudeDelta.current < -15) {
         maxAmplitude.current = newMaxAmplitude.current;
-        console.log("new max:", maxAmplitude.current);
+        // console.log("new max:", maxAmplitude.current);
       }
 
       lastTime.current = currentTime;
@@ -321,20 +311,6 @@ const Visualizer = () => {
     for (let i = 0; i < bufferLengthRef.current; i++) {
       const angle =
         ((currentTime * velocitiesRef.current[i]) / 50) % (2 * Math.PI);
-
-      // if (currentTime - lastTime.current > 1000) {
-      //   amplitudeDelta.current = maxAmplitude.current - dataArrayRef.current[i];
-
-      //   if (amplitudeDelta.current > 0 && dataArrayRef.current[i] > 0) {
-      //     maxAmplitude.current = dataArrayRef.current[i];
-      //     console.log("new max:", maxAmplitude.current);
-      //   } else if (amplitudeDelta.current < -15) {
-      //     maxAmplitude.current = dataArrayRef.current[i];
-      //     console.log("new max:", maxAmplitude.current);
-      //   }
-
-      //   lastTime.current = currentTime;
-      // }
 
       gloopRad = mapExp(
         dataArrayRef.current[i],
@@ -358,13 +334,37 @@ const Visualizer = () => {
 
       drawCircle(ctx, gloopx, gloopy, gloopRad, currentGradient);
     }
-
     ctx.restore();
     ctx.save();
-    ctx.filter = "blur(24px)";
 
     // Center Circle
+    ctx.filter = "blur(24px)";
     drawCircle(ctx, centerX, centerY, centerRadius, "rgb(0, 0, 0)");
+    ctx.restore();
+    ctx.save();
+
+    ///////////////// GRID /////////////////
+
+    // Mask under grid
+    ctx.strokeStyle = "rgb(171, 171, 171)";
+    ctx.lineWidth = 2;
+
+    if (gridIsOn.current) {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, centerY, canvas.width, canvas.height / 2);
+      verticalLinesRef.current.forEach((line) => {
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.stroke();
+      });
+      horizontalLinesRef.current.forEach((line) => {
+        ctx.beginPath();
+        ctx.moveTo(line.x1, line.y1);
+        ctx.lineTo(line.x2, line.y2);
+        ctx.stroke();
+      });
+    }
 
     //////////////// Particles ////////////////
 
@@ -493,6 +493,24 @@ const Visualizer = () => {
         backgroundColor: "black",
         overflow: "hidden",
       }}>
+      {/* <div
+        style={{
+          position: "absolute",
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "#010101",
+          mixBlendMode: "color-burn",
+          zIndex: "99",
+        }}></div>
+      <div
+        style={{
+          position: "absolute",
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "#a5a5a5",
+          mixBlendMode: "color-dodge",
+          zIndex: "98",
+        }}></div> */}
       <audio ref={audioRef} style={{ display: "none" }}>
         <source src='/audio/op-z_9.mp3' type='audio/mp3' />
         Your browser does not support the audio element.
@@ -500,7 +518,14 @@ const Visualizer = () => {
       <canvas
         ref={canvasRef}
         width={window.innerWidth}
-        height={window.innerHeight}></canvas>
+        height={window.innerHeight}
+        style={
+          {
+            // position: "relative",
+            // filter: "blur(16px)",
+            // zIndex: "97",
+          }
+        }></canvas>
       {showMessage && (
         <div
           style={{

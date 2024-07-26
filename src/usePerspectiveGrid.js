@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 const usePerspectiveGrid = (
   numVerticalLines,
   speed,
+  acceleration,
   delay,
   steepness,
   isPlaying
@@ -38,9 +39,10 @@ const usePerspectiveGrid = (
     const updateGrid = () => {
       horizontalLinesRef.current = horizontalLinesRef.current
         .map((line, index) => {
+          line.speed += acceleration;
           if (index === 0) return line; // Skip the persistent horizon line
-          const newY1 = line.y1 + speed;
-          const newY2 = line.y2 + speed;
+          const newY1 = line.y1 + line.speed;
+          const newY2 = line.y2 + line.speed;
           return { ...line, y1: newY1, y2: newY2 };
         })
         .filter((line, index) => index === 0 || line.y1 < canvasHeight); // Keep the persistent horizon line
@@ -53,6 +55,7 @@ const usePerspectiveGrid = (
           y1: horizon.y,
           x2: canvasWidth,
           y2: horizon.y,
+          speed: speed,
         });
       }
     };
@@ -71,7 +74,7 @@ const usePerspectiveGrid = (
       clearInterval(emitInterval);
       window.removeEventListener("resize", handleResize);
     };
-  }, [numVerticalLines, speed, delay, steepness, isPlaying]);
+  }, [numVerticalLines, speed, acceleration, delay, steepness, isPlaying]);
 
   return { verticalLinesRef, horizontalLinesRef };
 };
