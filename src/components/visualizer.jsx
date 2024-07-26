@@ -321,10 +321,23 @@ const Visualizer = () => {
     ctx.restore();
     ctx.save();
 
+    // Filters
+    ctx.globalCompositeOperation = "color-dodge";
+    ctx.fillStyle = "#cccbcb";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    ctx.save();
+
+    ctx.globalCompositeOperation = "color-burn";
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    ctx.save();
+
     ///////////////// GRID /////////////////
 
     // Mask under grid
-    ctx.strokeStyle = "rgb(171, 171, 171)";
+    ctx.strokeStyle = "rgba(255, 255, 255,0.3)";
     ctx.lineWidth = 2;
 
     if (gridIsOn.current) {
@@ -342,6 +355,18 @@ const Visualizer = () => {
         ctx.lineTo(line.x2, line.y2);
         ctx.stroke();
       });
+
+      // Draw atmospheric fog
+      const fogGradient = ctx.createLinearGradient(
+        centerX,
+        centerY - 50,
+        centerX,
+        centerY + 125
+      );
+      fogGradient.addColorStop(0, "rgb(70,70,70)");
+      fogGradient.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = fogGradient;
+      ctx.fillRect(0, centerY, canvas.width, 125);
     }
 
     //////////////// Particles ////////////////
@@ -371,19 +396,6 @@ const Visualizer = () => {
     // });
     // ctx.restore();
     // ctx.save();
-
-    // Filters
-    ctx.globalCompositeOperation = "color-dodge";
-    ctx.fillStyle = "#cccbcb";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
-    ctx.save();
-
-    ctx.globalCompositeOperation = "color-burn";
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.restore();
-    ctx.save();
 
     //////////////// Draw Bars /////////////////
 
