@@ -211,7 +211,7 @@ const Visualizer = () => {
       ? canvas.width - 256
       : canvas.width - 256;
 
-    const centerOffset = horizonModeIsOn.current ? 150 : 0;
+    const centerOffset = horizonModeIsOn.current ? 0 : 0;
 
     const centerRadius = canvas.width > 778 ? desktopRadius : mobileRadius;
 
@@ -310,7 +310,7 @@ const Visualizer = () => {
     ctx.save();
 
     // Center Circle
-    ctx.filter = "blur(24px)";
+    ctx.filter = "blur(36px)";
     drawCircle(
       ctx,
       centerX,
@@ -336,13 +336,36 @@ const Visualizer = () => {
 
     ///////////////// GRID /////////////////
 
-    // Mask under grid
     ctx.strokeStyle = "rgba(255, 255, 255,0.3)";
     ctx.lineWidth = 2;
 
     if (gridIsOn.current) {
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, centerY, canvas.width, canvas.height / 2);
+      // Blur under grid Screen Canvas /////////////////
+
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = canvas.width;
+      offCanvas.height = canvas.height;
+      const offctx = offCanvas.getContext("2d");
+
+      offctx.drawImage(canvas, 0, 0);
+
+      offctx.filter = "blur(36px)";
+      offctx.drawImage(offCanvas, 0, 0);
+      ctx.scale(1, -1);
+      ctx.drawImage(
+        offCanvas,
+        0,
+        canvas.height / 2,
+        canvas.width,
+        -canvas.height / 2,
+        0,
+        -canvas.height,
+        canvas.width,
+        canvas.height / 2
+      );
+      ctx.restore();
+      ctx.save();
+
       verticalLinesRef.current.forEach((line) => {
         ctx.beginPath();
         ctx.moveTo(line.x1, line.y1);
