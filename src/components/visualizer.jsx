@@ -13,6 +13,8 @@ const Visualizer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showMessage, setShowMessage] = useState(true);
   const gridIsOn = useRef(false);
+  const horizonModeIsOn = useRef(false);
+  const barsIsOn = useRef(false);
 
   const lastTime = useRef();
   // const medianAmplitude = useRef(255);
@@ -57,6 +59,14 @@ const Visualizer = () => {
         !gridIsOn.current
           ? (gridIsOn.current = true)
           : (gridIsOn.current = false);
+      } else if (event.code === "KeyH") {
+        !horizonModeIsOn.current
+          ? (horizonModeIsOn.current = true)
+          : (horizonModeIsOn.current = false);
+      } else if (event.code === "KeyB") {
+        !barsIsOn.current
+          ? (barsIsOn.current = true)
+          : (barsIsOn.current = false);
       }
     };
 
@@ -161,49 +171,6 @@ const Visualizer = () => {
 
     analyserRef.current.getByteFrequencyData(dataArrayRef.current);
 
-    ///////////////// BARS /////////////////
-
-    // const maxBarHeight = window.innerHeight - 50;
-    // const scalingFactor = maxBarHeight / 255;
-
-    // const barWidth = canvas.width / bufferLengthRef.current - 1;
-    // let barHeight;
-    // let x = 0;
-
-    // for (let i = 0; i < bufferLengthRef.current; i++) {
-    //   // barHeight = dataArrayRef.current[i] * scalingFactor;
-    //   barHeight = mapExp(
-    //     dataArrayRef.current[i],
-    //     0,
-    //     maxAmplitude.current,
-    //     0,
-    //     maxBarHeight
-    //   );
-
-    //   // Set bar color based on frequency range
-    //   if (i < bufferLengthRef.current * 0.33) {
-    //     ctx.fillStyle = `rgb(
-    //         ${barHeight / scalingFactor + 100},
-    //         0,
-    //         0
-    //     )`;
-    //   } else if (i < bufferLengthRef.current * 0.66) {
-    //     ctx.fillStyle = `rgb(
-    //         0,
-    //         ${barHeight / scalingFactor + 100},
-    //         0
-    //     )`;
-    //   } else {
-    //     ctx.fillStyle = `rgb(
-    //         0,
-    //         0,
-    //         ${barHeight / scalingFactor + 100}
-    //     )`;
-    //   }
-    //   ctx.fillRect(x, canvas.height - barHeight / 2, barWidth, barHeight / 2);
-    //   x += barWidth + 1;
-    // }
-
     ///////////////// CALCULATE AVERAGE FREQ /////////////////
 
     // Calculate average amplitude for low, mid, and high frequencies
@@ -239,13 +206,21 @@ const Visualizer = () => {
     const centerY = canvas.height / 2;
 
     // Set Gloop parameters
-    const centerRadius = canvas.width > 500 ? 256 : canvas.width - 256;
+    const desktopRadius = horizonModeIsOn.current ? 400 : 256;
+    const mobileRadius = horizonModeIsOn.current
+      ? canvas.width - 256
+      : canvas.width - 256;
+
+    const centerOffset = horizonModeIsOn.current ? 150 : 0;
+
+    const centerRadius = canvas.width > 778 ? desktopRadius : mobileRadius;
+
     const orbitRadius = centerRadius - 0.19 * centerRadius;
     const minRad = orbitRadius / 6 + 6;
     const maxRad = minRad * 2.5;
     let gloopRad = minRad;
     let gloopx = centerX;
-    let gloopy = centerY;
+    let gloopy = centerY + centerOffset;
 
     // Make some gradients
     const grad1 = ctx.createLinearGradient(
@@ -287,20 +262,16 @@ const Visualizer = () => {
     const grads = [grad1, grad2, grad3, grad4];
     let currentGradient = grad1;
 
-    const currentTime = Date.now();
-
     // Every second determine the new max amplitude
-
+    const currentTime = Date.now();
     if (currentTime - lastTime.current > 1000) {
       newMaxAmplitude.current = findMaxValue(dataArrayRef.current);
       amplitudeDelta.current = maxAmplitude.current - newMaxAmplitude.current;
 
       if (amplitudeDelta.current > 0 && newMaxAmplitude.current > 0) {
         maxAmplitude.current = newMaxAmplitude.current;
-        // console.log("new max:", maxAmplitude.current);
       } else if (amplitudeDelta.current < -15) {
         maxAmplitude.current = newMaxAmplitude.current;
-        // console.log("new max:", maxAmplitude.current);
       }
 
       lastTime.current = currentTime;
@@ -327,6 +298,7 @@ const Visualizer = () => {
 
       gloopy =
         centerY +
+        centerOffset +
         orbitRadius *
           Math.sin(angle + (i * 2 * Math.PI) / bufferLengthRef.current);
 
@@ -339,7 +311,13 @@ const Visualizer = () => {
 
     // Center Circle
     ctx.filter = "blur(24px)";
-    drawCircle(ctx, centerX, centerY, centerRadius, "rgb(0, 0, 0)");
+    drawCircle(
+      ctx,
+      centerX,
+      centerY + centerOffset,
+      centerRadius,
+      "rgb(0, 0, 0)"
+    );
     ctx.restore();
     ctx.save();
 
@@ -395,20 +373,48 @@ const Visualizer = () => {
     // ctx.save();
 
     // Filters
-    ctx.restore();
-    ctx.save();
     ctx.globalCompositeOperation = "color-dodge";
     ctx.fillStyle = "#cccbcb";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctx.restore();
     ctx.save();
+
     ctx.globalCompositeOperation = "color-burn";
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctx.restore();
     ctx.save();
+
+    //////////////// Draw Bars /////////////////
+
+    const maxBarHeight = window.innerHeight / 3;
+    const barPadding = 24;
+    const barWidth = canvas.width / bufferLengthRef.current - barPadding;
+    let barHeight;
+    let x = 0;
+
+    if (barsIsOn.current) {
+      for (let i = 0; i < bufferLengthRef.current; i++) {
+        barHeight = mapExp(
+          dataArrayRef.current[i],
+          0,
+          maxAmplitude.current,
+          0,
+          maxBarHeight
+        );
+
+        // Set bar color based on frequency range
+        if (i < bufferLengthRef.current * 0.33) {
+          ctx.fillStyle = `rgba(0, 255, 0, ${dataArrayRef.current[i] / 255})`;
+        } else if (i < bufferLengthRef.current * 0.66) {
+          ctx.fillStyle = `rgba(0, 255, 0, ${dataArrayRef.current[i] / 255})`;
+        } else {
+          ctx.fillStyle = `rgba(0, 255, 0, ${dataArrayRef.current[i] / 255})`;
+        }
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + barPadding;
+      }
+    }
   };
 
   // Function to draw a circle
@@ -458,7 +464,6 @@ const Visualizer = () => {
         maxValue = arr[i];
       }
     }
-
     return maxValue;
   };
 
